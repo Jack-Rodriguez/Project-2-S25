@@ -68,6 +68,7 @@ void FileSystem::touch(const std::string& name)
     currentDirectory->children.push_back(newFile);
 }
 
+//this function will return all of the files and directories in the current directory as a string/strings
 std::string FileSystem::ls() 
 {
     //initializes streamed string
