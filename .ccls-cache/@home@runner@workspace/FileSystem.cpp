@@ -1,6 +1,7 @@
 #include "FileSystem.hpp"
 #include <stdexcept>
 #include <sstream>
+#include <stack>
 using namespace std;
 
 FileSystemNode::FileSystemNode(std::string name, bool isDir) 
@@ -101,9 +102,44 @@ void FileSystem::rm(const std::string& name) {
    
 }
 
-std::string FileSystem::pwd() {
-    //to do..
-    return 0;
+//this will return a string of the path to the current directory
+std::string FileSystem::pwd() 
+{
+    //checks if the current directory is the root directory
+    if(currentDirectory->parent == nullptr)
+    {
+        return "/";
+    }
+
+    //creates a stack to store the names of each directory on the path, and a new node that will be iterated to the root
+    stack<string> pathStack;
+    FileSystemNode* temp = currentDirectory;
+
+    //this will store each name into the stack, and move to the next parent
+    while(temp->parent != nullptr)
+    {
+        pathStack.push(temp->name);
+        temp = temp->parent;
+    }
+
+    //creates a stringstream to store the path
+    stringstream ss;
+
+    
+    
+
+    //uses ss to create the final string of the entire path
+    while(!pathStack.empty())
+    {
+         ss << "/" << pathStack.top();
+         pathStack.pop();
+    }
+    
+    //adds a final slash because every directory ends with one when printed
+    ss << "/";
+    
+    //returns final string
+    return ss.str();
 }
 
 void FileSystem::cp(const std::string& source, const std::string& destination) {
