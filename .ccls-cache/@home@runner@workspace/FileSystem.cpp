@@ -22,6 +22,7 @@ FileSystem::~FileSystem() {
     delete root;
 }
 
+
 //this function will make a new directory in the current directory
 void FileSystem::mkdir(const std::string& name) 
 {
@@ -92,8 +93,34 @@ std::string FileSystem::ls()
     return ss.str();
 }
 
-void FileSystem::cd(const std::string& path) {
-    //to do..
+void FileSystem::cd(const std::string& path) 
+{
+    //sets the current directory to the parent dirstory of the current directory
+    if(path == "..")
+    {
+        currentDirectory = currentDirectory->parent;
+    }
+    //sets the current directory to the root directory if the path is "/"
+    else if(path == "/")
+    {
+        currentDirectory = root;
+    }
+    else
+    {
+        //finds the node with the given name
+        FileSystemNode* node = find(path);
+        //if the node is not found, it will throw an error
+        if(node == nullptr)
+        {
+            throw runtime_error("Directory not found");
+        }
+        else if(node->isDirectory == false)
+        {
+            throw runtime_error("Not a directory");
+        }
+        //if the node is found, it will set the current directory to the node
+        currentDirectory = node;
+    }
    
 }
 
@@ -124,9 +151,6 @@ std::string FileSystem::pwd()
 
     //creates a stringstream to store the path
     stringstream ss;
-
-    
-    
 
     //uses ss to create the final string of the entire path
     while(!pathStack.empty())
