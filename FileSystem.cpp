@@ -124,9 +124,36 @@ void FileSystem::cd(const std::string& path)
    
 }
 
-void FileSystem::rm(const std::string& name) {
-    //to do..
-   
+//this function deletes a file or directory from the current directory
+//at first I assumed that this would be recursive
+//but then i looked at the ~FileSystemNode destructor and realized I justy need to iterate
+//I would have done a const auto& child : currentDirectory->children like i do above
+//but I was having trouble with getting rid of the pointer
+//after some research, I learned to do the for loop this way and to use erase
+//so this function is of my own work, after outside research.
+void FileSystem::rm(const std::string& name) 
+{
+    //we need to check if the current file even hasd children
+    if(currentDirectory->children.empty())
+    {
+        throw runtime_error("Directory is empty");
+    }
+
+    //for every child in the current directory, we will check if the name is the same as the name of the child
+    //this line is the one I got from research, I had to change it slightly for this project.
+    for(auto i = currentDirectory->children.begin(); i != currentDirectory->children.end(); i++)
+        {
+            //if so, we delete it using ~FileSystemNode, and then we erase the child from the vector
+            if((*i)->name == name)
+            {
+                delete *i;
+                currentDirectory->children.erase(i);
+                return;
+            }
+        }
+
+    //if we cant find the name we throw an error message
+    throw runtime_error("File or directory not found");
 }
 
 //this will return a string of the path to the current directory
