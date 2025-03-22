@@ -196,38 +196,47 @@ std::string FileSystem::pwd()
 void FileSystem::cp(const std::string& source, const std::string& destination) 
 {
 
-    stringstream ss(source);
-    string part;
-    vector<string> pathParts;
-
-    while(getline(ss, part, '/'))
-        {
-            if(!part.empty())
-            {
-                pathParts.push_back(part);
-            }
-        }
-
-    FileSystemNode* tracker = root;
-
-    for(const auto& step : pathParts)
-        {
-            bool found = false;
-            for(auto child : tracker->children)
-                {
-                    if(child->name == step)
-                    {
-                        tracker = child;
-                        found = true;
-                        break;
-                    }
-                }
-            if(!found)
-            {
-                throw runtime_error("Source not found");
-            }
-        }
+    // Remove leading slash if present
+    std::string searchPath = source;
+    if (!searchPath.empty() && searchPath[0] == '/') {
+        searchPath = searchPath.substr(1);
+    }
     
+    // Navigate through path components
+    FileSystemNode* tracker = root;
+    size_t pos = 0;
+    
+    while ((pos = searchPath.find('/')) != std::string::npos) {
+        std::string component = searchPath.substr(0, pos);
+        searchPath = searchPath.substr(pos + 1);
+        
+        bool found = false;
+        for (auto child : tracker->children) {
+            if (child->name == component) {
+                tracker = child;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            throw runtime_error("Source not found");
+        }
+    }
+    
+    // Find final component
+    if (!searchPath.empty()) {
+        bool found = false;
+        for (auto child : tracker->children) {
+            if (child->name == searchPath) {
+                tracker = child;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            throw runtime_error("Source not found");
+        }
+    }
     
     FileSystemNode* sourceNode = tracker;
 
