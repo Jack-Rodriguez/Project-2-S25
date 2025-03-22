@@ -195,24 +195,28 @@ std::string FileSystem::pwd()
 
 void FileSystem::cp(const std::string& source, const std::string& destination) 
 {
+    // Handle source path
     FileSystemNode* sourceNode = find(source);
-
-    if(sourceNode == nullptr)
-    {
+    if(sourceNode == nullptr) {
         throw runtime_error("Source not found");
     }
 
-    for(auto child : root->children)
-        {
-            if(child->name == destination)
-            {
-                throw runtime_error("Destination already exists");
-            }
+    // Get destination name (after last /)
+    std::string destName = destination;
+    size_t lastSlash = destination.find_last_of('/');
+    if(lastSlash != std::string::npos) {
+        destName = destination.substr(lastSlash + 1);
+    }
+
+    // Check if destination exists in root
+    for(auto child : root->children) {
+        if(child->name == destName) {
+            throw runtime_error("Destination already exists");
         }
+    }
 
-    //i guess i could have just called the function in the push back but this makes it more readible for me
-    FileSystemNode* newNode = copyNode(sourceNode, currentDirectory, destination);
-
+    // Create copy with root as parent
+    FileSystemNode* newNode = copyNode(sourceNode, root, destName);
     root->children.push_back(newNode);
 }
 
