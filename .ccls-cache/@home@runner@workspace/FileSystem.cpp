@@ -193,20 +193,57 @@ std::string FileSystem::pwd()
     return ss.str();
 }
 
-void FileSystem::cp(const std::string& source, const std::string& destination) {
-    // Hints:
-    // - Parse paths to find source node and destination parent
-    // - Check if destination exists (throw error if yes)
-    // - Create copy using copyNode helper
-    // - Add to destination's children
+void FileSystem::cp(const std::string& source, const std::string& destination) 
+{
+    FileSystemNode* sourceNode = find(source);
+
+    if(sourceNode == nullptr)
+    {
+        throw runtime_error("Source not found");
+    }
+
+    for(auto child : root->children)
+        {
+            if(child->name == destination)
+            {
+                throw runtime_error("Destination already exists");
+            }
+        }
+
+    //i guess i could have just called the function in the push back but this makes it more readible for me
+    FileSystemNode* newNode = copyNode(sourceNode, currentDirectory, destination);
+
+    root->children.push_back(newNode);
 }
 
 // Helper method to recursively copy a node
-FileSystemNode* FileSystem::copyNode(FileSystemNode* source, FileSystemNode* destParent, const std::string& newName) {
-    // Hints:
-    // - Create new node with same properties
-    // - For directories, recursively copy children
-    return nullptr; // Placeholder
+//this function is given a source to copy from, a destination parent, and a new name for the copy
+FileSystemNode* FileSystem::copyNode(FileSystemNode* source, FileSystemNode* destParent, const std::string& newName) 
+{
+    //creates a new node with the given name and parent
+    FileSystemNode* newNode = new FileSystemNode(newName, source->isDirectory);
+    //sets the new node to have the destination parent as the parent.
+    newNode->parent = destParent;
+
+    //if source is a file, we return the new node
+    if(!newNode->isDirectory)
+    {
+        return newNode;
+    }
+
+    //this loops the each child of the new node, it calls the function on each child. 
+    //if the child is a directory, it goes through each child of that
+    //and so on
+    for(auto child : source->children)
+        {
+            //recursively calls the function on each child
+            FileSystemNode* newChild = copyNode(child, newNode, child->name);
+            //adds each child to the children of the new nodes
+            newNode->children.push_back(newChild);
+        }
+
+    //returns the new node
+    return newNode;
 }
 
 FileSystemNode* FileSystem::findNode(FileSystemNode* startNode, const std::string& name) {
