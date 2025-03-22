@@ -195,26 +195,41 @@ std::string FileSystem::pwd()
 
 void FileSystem::cp(const std::string& source, const std::string& destination) 
 {
-    // Remove leading slash from source and find the source node
-    std::string sourcePath = source;
-    if (!sourcePath.empty() && sourcePath[0] == '/') {
-        sourcePath = sourcePath.substr(1);
-    }
 
-    FileSystemNode* tracker = root;
-    if (!sourcePath.empty()) {
-        for (auto child : root->children) {
-            if (child->name == sourcePath) {
-                tracker = child;
-                break;
+    stringstream ss(source);
+    string part;
+    vector<string> pathParts;
+
+    while(getline(ss, part, '/'))
+        {
+            if(!part.empty())
+            {
+                pathParts.push_back(part);
             }
         }
-    }
+
+    FileSystemNode* tracker = root;
+
+    for(const auto& step : pathParts)
+        {
+            bool found = false;
+            for(auto child : tracker->children)
+                {
+                    if(child->name == step)
+                    {
+                        tracker = child;
+                        found = true;
+                        break;
+                    }
+                }
+            if(!found)
+            {
+                throw runtime_error("Source not found");
+            }
+        }
+    
     
     FileSystemNode* sourceNode = tracker;
-    if (sourceNode == root) {
-        throw runtime_error("Source not found");
-    }
 
     // Get destination name (after last /)
     std::string destName = destination;
