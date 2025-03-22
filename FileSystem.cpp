@@ -195,9 +195,11 @@ std::string FileSystem::pwd()
 
 void FileSystem::cp(const std::string& source, const std::string& destination) 
 {
-    // Handle source path
+    
     FileSystemNode* sourceNode = find(source);
-    if(sourceNode == nullptr) {
+    
+    if(sourceNode == nullptr) 
+    {
         throw runtime_error("Source not found");
     }
 
