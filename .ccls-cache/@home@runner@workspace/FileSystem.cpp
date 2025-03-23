@@ -107,6 +107,7 @@ void FileSystem::cd(const std::string& path)
     }
     else
     {
+        
         //finds the node with the given name
         FileSystemNode* node = find(path);
         //if the node is not found, it will throw an error

@@ -19,17 +19,18 @@ public:
 
 class FileSystem {
 private:
-    FileSystemNode* root;
+    
     FileSystemNode* currentDirectory;
 
     FileSystemNode* findNode(FileSystemNode* startNode, const std::string& name);
     std::string displayTree(FileSystemNode* node, std::string indent);
-    FileSystemNode* copyNode(FileSystemNode* source, FileSystemNode* destParent, const std::string& newName);
+    
 
 public:
     FileSystem();
     ~FileSystem();
-
+    FileSystemNode* root;
+    FileSystemNode* copyNode(FileSystemNode* source, FileSystemNode* destParent, const std::string& newName);
     void mkdir(const std::string& name);
     void touch(const std::string& name);
     std::string ls();
