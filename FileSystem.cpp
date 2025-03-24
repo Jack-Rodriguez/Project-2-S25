@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <stack>
+#include <iostream>
 using namespace std;
 
 FileSystemNode::FileSystemNode(std::string name, bool isDir) 
@@ -32,7 +33,7 @@ void FileSystem::mkdir(const std::string& name)
         //if the new name is the same as the name of the child, then it will throw an error.
         if(child->name == name)
         {
-            throw runtime_error("Directory already exists");
+            throw runtime_error("File already exists");
         }
     }
 
@@ -105,21 +106,47 @@ void FileSystem::cd(const std::string& path)
     {
         currentDirectory = root;
     }
-    else
+    else if (!path.empty() && path.front() == '/') 
     {
         
-        //finds the node with the given name
-        FileSystemNode* node = find(path);
-        //if the node is not found, it will throw an error
-        if(node == nullptr)
+        FileSystemNode* tracker = root;
+        std::stringstream ss(path);
+        std::string part;
+        bool found = true;
+
+        while (std::getline(ss, part, '/')) 
+        {
+            if (part.empty()) continue;
+            bool stepFound = false;
+            for (auto child : tracker->children) 
+            {
+                if (child->name == part) 
+                {
+                    tracker = child;
+                    stepFound = true;
+                    break;
+                }
+            }
+            if (!stepFound) 
+            {
+                found = false;
+                break;
+            }
+        }
+
+        if (!found || !tracker->isDirectory) 
         {
             throw runtime_error("Directory not found");
         }
-        else if(node->isDirectory == false)
+        currentDirectory = tracker;
+    } 
+    else
+    {
+        FileSystemNode* node = find(path);
+        if (node == nullptr || !node->isDirectory) 
         {
-            throw runtime_error("Not a directory");
+            throw runtime_error("Directory not found");
         }
-        //if the node is found, it will set the current directory to the node
         currentDirectory = node;
     }
    
@@ -232,13 +259,11 @@ void FileSystem::cp(const std::string& source, const std::string& destination)
     
     FileSystemNode* sourceNode = tracker;
 
-    // Get destination name (after last /)
-    std::string destName = destination;
-    size_t lastSlash = destination.find_last_of('/');
+    string destName = destination;
     
-    if(lastSlash != std::string::npos) 
+    if (!destName.empty() && destName.front() == '/') 
     {
-        destName = destination.substr(lastSlash + 1);
+        destName = destName.substr(1);
     }
 
     // Check if destination exists in root
@@ -255,10 +280,12 @@ void FileSystem::cp(const std::string& source, const std::string& destination)
     root->children.push_back(newNode);
 }
 
+
 // Helper method to recursively copy a node
 //this function is given a source to copy from, a destination parent, and a new name for the copy
 FileSystemNode* FileSystem::copyNode(FileSystemNode* source, FileSystemNode* destParent, const std::string& newName) 
 {
+    
     //creates a new node with the given name and parent
     FileSystemNode* newNode = new FileSystemNode(newName, source->isDirectory);
     //sets the new node to have the destination parent as the parent.
@@ -275,8 +302,12 @@ FileSystemNode* FileSystem::copyNode(FileSystemNode* source, FileSystemNode* des
     //and so on
     for(auto child : source->children)
         {
+             cout << "Copying child: " << child->name << " into " << newNode->name << endl;
             //recursively calls the function on each child
             FileSystemNode* newChild = copyNode(child, newNode, child->name);
+
+             newChild->parent = newNode; 
+            
             //adds each child to the children of the new nodes
             newNode->children.push_back(newChild);
         }
