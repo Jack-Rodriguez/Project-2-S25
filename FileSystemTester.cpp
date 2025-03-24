@@ -225,7 +225,6 @@ private:
         
         // Test recursive copy
         fs.cd("/dest_dir/subdir");
-        fs.ls();
         result = fs.ls();
         if (result.find("subfile.txt") == std::string::npos) {
             success = false;

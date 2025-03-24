@@ -5,6 +5,17 @@
 #include <iostream>
 using namespace std;
 
+/*-----------------------------------------------------------------------------------------------------------------------
+Hello, my name is Jack Rodriguez U69523108. This is my own work. Any and all code taken from the my research is cited 
+mentioned below. I did not steal any work and say it is my own. I used AI like ChatGPT and Replit assistant to help me
+learn concepts and debug my code. What I did not do was use AI to write any code for me. Most functions were complete 
+within the first week. I had to go back and redo many of these as they ended up not working in future tests. My biggest 
+problem was cd. I coded cd to work as intended within the testcd in the tesstest.cpp file. Cd ends up being used in three 
+different ways than I was prepared for, making me change it each time. I left comments on each function for what worked 
+and what didn't. This was a challenging project but I learned a lot. It is quite messy after all of the debugging so I 
+hope to come back some day and clean it up. If you read this have a great day! And thank you for your hard work!
+-----------------------------------------------------------------------------------------------------------------------*/
+
 FileSystemNode::FileSystemNode(std::string name, bool isDir) 
     : name(name), isDirectory(isDir), parent(nullptr) {}
 
@@ -94,9 +105,11 @@ std::string FileSystem::ls()
     return ss.str();
 }
 
+//this function changes directories. Though I thought I finished this early on, there were many problems 
+//later on in other test cases. eventually I figured it out after hours of debugging and research.
 void FileSystem::cd(const std::string& path) 
 {
-    //sets the current directory to the parent dirstory of the current directory
+    //sets the current directory to the parent directory of the current directory
     if(path == "..")
     {
         currentDirectory = currentDirectory->parent;
@@ -106,22 +119,33 @@ void FileSystem::cd(const std::string& path)
     {
         currentDirectory = root;
     }
+    //heres a fun bit. I needed to check if the path started with a slash. If so, I was parsing.
     else if (!path.empty() && path.front() == '/') 
     {
-        
+
+        //the tracker node starts at the root directory
         FileSystemNode* tracker = root;
-        std::stringstream ss(path);
-        std::string part;
+        //we make a streamed string to parse the path
+        stringstream ss(path);
+        //this is a temp value to hold any string we get from the path
+        string part;
+        //we keep track if we find the given directory
         bool found = true;
 
-        while (std::getline(ss, part, '/')) 
+        //this loop will parse through, and collect every string that is between the slashes
+        while (getline(ss, part, '/')) 
         {
             if (part.empty()) continue;
+            //we need a found token for this loop as well. It will affect the found variable
+            //This is like so messy but it works and Im afraid to change it.
             bool stepFound = false;
+            //for every child in the tracker's current directory, ccheck if the part (the string we are parsing)
+            //is the same as the child's name
             for (auto child : tracker->children) 
             {
                 if (child->name == part) 
                 {
+                    //changes tracker to that child, and sets found to true
                     tracker = child;
                     stepFound = true;
                     break;
@@ -134,20 +158,31 @@ void FileSystem::cd(const std::string& path)
             }
         }
 
+        //if the path was never found, then we throw an error
         if (!found || !tracker->isDirectory) 
         {
             throw runtime_error("Directory not found");
         }
+        
+        //then we set the current directory to the tracker which is at the desired location
         currentDirectory = tracker;
     } 
+        //this is if we are passed a path that is just a directory name with no slashes    
     else
     {
-        FileSystemNode* node = find(path);
-        if (node == nullptr || !node->isDirectory) 
+        bool found = false;
+        //for each child in the current directory check the names and cd to the matching child
+        for (auto child : currentDirectory->children) 
         {
-            throw runtime_error("Directory not found");
+            if (child->name == path && child->isDirectory) 
+            {
+                currentDirectory = child;
+                found = true;
+                break;
+            }
         }
-        currentDirectory = node;
+        //if the path was never found, then we throw an error
+        if (!found) throw std::runtime_error("Directory not found");
     }
    
 }
@@ -224,10 +259,12 @@ std::string FileSystem::pwd()
 void FileSystem::cp(const std::string& source, const std::string& destination) 
 {
 
+    //similar to above, we are going to parse through the string, and save each string between the slashes into a vector, then iterate through the vector, changing the directories to the next child with a matching name.
     stringstream ss(source);
     string part;
     vector<string> pathParts;
 
+    //parses through and pushes the string between the slashes into the vector
     while(getline(ss, part, '/'))
         {
             if(!part.empty())
@@ -236,15 +273,19 @@ void FileSystem::cp(const std::string& source, const std::string& destination)
             }
         }
 
+    //makes a tracking node that starts at the root directory
     FileSystemNode* tracker = root;
 
+    //goes through the vector and changes the tracker to the next child with a matching name
     for(const auto& step : pathParts)
         {
             bool found = false;
+            //checks each child of each string in the vector.
             for(auto child : tracker->children)
                 {
                     if(child->name == step)
                     {
+                        //tracker moves through the children
                         tracker = child;
                         found = true;
                         break;
@@ -256,17 +297,19 @@ void FileSystem::cp(const std::string& source, const std::string& destination)
             }
         }
     
-    
+    //we make a sourceNode that is the tracker at the end of the path
     FileSystemNode* sourceNode = tracker;
 
+    //we make a destName to change as destination is a const
     string destName = destination;
-    
+
+    //we take the slash off the front of the destination name
     if (!destName.empty() && destName.front() == '/') 
     {
         destName = destName.substr(1);
     }
 
-    // Check if destination exists in root
+    // Check if destination exists in root. If so we throw an error.
     for(auto child : root->children) 
     {
         if(child->name == destName) 
@@ -276,7 +319,9 @@ void FileSystem::cp(const std::string& source, const std::string& destination)
     }
 
     // Create copy with root as parent
+    //this begins the recursion
     FileSystemNode* newNode = copyNode(sourceNode, root, destName);
+    //adds this new node to the children of the root
     root->children.push_back(newNode);
 }
 
@@ -302,12 +347,10 @@ FileSystemNode* FileSystem::copyNode(FileSystemNode* source, FileSystemNode* des
     //and so on
     for(auto child : source->children)
         {
-             cout << "Copying child: " << child->name << " into " << newNode->name << endl;
             //recursively calls the function on each child
             FileSystemNode* newChild = copyNode(child, newNode, child->name);
-
+            //i had added this way later. Sets the parent of each child to be the new node
              newChild->parent = newNode; 
-            
             //adds each child to the children of the new nodes
             newNode->children.push_back(newChild);
         }
